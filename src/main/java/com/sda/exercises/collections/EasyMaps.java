@@ -1,4 +1,4 @@
-package com.sda.exercises;
+package com.sda.exercises.collections;
 
 import java.util.*;
 
@@ -7,9 +7,9 @@ import static java.lang.String.format;
 public class EasyMaps {
 
     public static void main(String[] args) {
-//        readUniqueNames();
-//        readDuplicateNames();
-        readCountries();
+//        readUniqueNames(); // use with "pesele.i.nazwiska.txt" file from resources
+//        readDuplicateNames(); // use with "pesele.i.powtorzone.nazwiska.txt" file from resources
+        readCountries(); // use with "kraje.txt" file from resources
     }
 
     private static void readUniqueNames() {

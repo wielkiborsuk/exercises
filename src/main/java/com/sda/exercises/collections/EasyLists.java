@@ -1,4 +1,4 @@
-package com.sda.exercises;
+package com.sda.exercises.collections;
 
 import java.util.*;
 
