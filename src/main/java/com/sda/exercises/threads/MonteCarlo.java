@@ -1,54 +1,68 @@
 package com.sda.exercises.threads;
 
-import java.util.List;
 import java.util.Random;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class MonteCarlo {
 
-    ExecutorService es = Executors.newFixedThreadPool(10);
-    private int hitCount = 0;
+    private static double hitSum = 0;
+    private static long iterationSum = 0;
 
-    synchronized private void hitInc() {
-        hitCount++;
+    synchronized private static void addValues(double hits, long iterations) {
+        hitSum += hits;
+        iterationSum += iterations;
     }
 
     public static void main(String[] args) throws InterruptedException, ExecutionException {
         long start = System.currentTimeMillis();
-        MonteCarlo m = new MonteCarlo();
-        System.out.println(m.monteCarlo(10000000));
+        System.out.println(monteCarlo(10000000));
+        System.out.println("seconds passed: " + (System.currentTimeMillis()-start)/1000.0);
 
-        System.out.println((System.currentTimeMillis() - start)/1000.0);
-        m.es.shutdownNow();
+        start = System.currentTimeMillis();
+        System.out.println(parallelMonteCarlo(10, 1000000));
+        System.out.println("seconds passed: " + (System.currentTimeMillis()-start)/1000.0);
     }
 
-    public double monteCarlo(long iterations) throws InterruptedException, ExecutionException {
-        List<Future<Integer>> futures = IntStream.range(0, 10)
-                .mapToObj(n -> es.submit(() -> getHitCount(iterations)))
-                .collect(Collectors.toList());
-
-        int count = 0;
-        for (Future<Integer> f : futures) {
-            count += f.get();
+    public static double monteCarlo(long iterations) {
+        int hitCount = 0;
+        for (long i = 0; i < iterations; i++) {
+            double x = Math.random();
+            double y = Math.random();
+            double r = Math.sqrt(x * x + y * y);
+            if (r <= 1) {
+                hitCount++;
+            }
         }
-
-        return 4.0 * count / iterations / 10;
+        return 4.0 * hitCount / iterations;
     }
 
-    private Integer getHitCount(long iterations) {
-        Integer count = 0;
+    public static double parallelMonteCarlo(int threads, long iterations) throws InterruptedException {
+        ExecutorService es = Executors.newFixedThreadPool(threads);
+        for (int i=0; i<threads; i++) {
+            es.execute(() -> {
+                monteCarloThread(iterations);
+            });
+        }
+        es.shutdown();
+        es.awaitTermination(10, TimeUnit.SECONDS);
+
+        return 4.0 * hitSum / iterationSum;
+    }
+
+    private static void monteCarloThread(long iterations) {
         Random random = new Random();
+        long hitCount = 0;
         for (long i = 0; i < iterations; i++) {
             double x = random.nextDouble();
             double y = random.nextDouble();
-            // !!! generating with Math.random() forced threads to wait for each other
             double r = Math.sqrt(x * x + y * y);
             if (r <= 1) {
-                count++;
+                hitCount++;
             }
         }
-        return count;
+        addValues(hitCount, iterations);
     }
 }
